@@ -13,7 +13,7 @@ private:
     size_t size = 1;
     union {
         uint32_t small_data[2];
-        uint32_t* big_data;
+        uint32_t* big_data; //inv: big_data[-1] == ref_cnt
     } number;
     void detach();
     void shrink_to_fit();
