@@ -99,7 +99,7 @@ bool operator>(unsigned_number const& a, unsigned_number const& b) {
     if (a.size < b.size) {
         return false;
     }
-    for (int i = a.size - 1; i >= 0; i--) {
+    for (int i = a.size; i--; ) {
         if (a.data[i] < b.data[i]) {
             return false;
         } else if (a.data[i] > b.data[i]) {
@@ -111,20 +111,14 @@ bool operator>(unsigned_number const& a, unsigned_number const& b) {
 
 unsigned_number operator*(unsigned_number const& a, unsigned_number const& b) {
     unsigned_number ans(a.size + b.size, 0);
-    unsigned_number cur(a.size + 1, 0);
-    for (size_t ib = 0; ib < b.size; ib++) {
-        uint64_t t = 0;
-        for (size_t ia = 0; ia < a.size; ia++) {
-            t = (uint64_t) b.data[ib] * a.data[ia] + (t >> 32);
-            cur.data[ia] = (uint32_t) t;
-        }
-        cur.data[cur.size - 1] = (t >> 32);
-        t = 0;
-        for (size_t ic = 0; ic < cur.size; ic++) {
-            t = (uint64_t) cur.data[ic] + ans.data[ib + ic] + (t >> 32);
+    for (size_t ib = 0; ib < b.size; ++ib) {
+        uint64_t t = 0, tt = 0;
+        for (size_t ic = 0; ic < a.size; ++ic) {
+            tt = (uint64_t) b.data[ib] * a.data[ic] + (tt >> 32);
+            t = (t >> 32) + ans.data[ib + ic] + (uint32_t)tt;
             ans.data[ib + ic] = (uint32_t) t;
         }
-        ans.data[ans.size - 1] += (t >> 32);
+        ans.data[ib + a.size] = (tt >> 32) + (t >> 32);
     }
     ans.shrink_to_fit();
     return ans;
@@ -138,15 +132,10 @@ unsigned_number& unsigned_number::operator=(unsigned_number const& other) {
 
 unsigned_number operator+(unsigned_number const& a, unsigned_number const& b) {
     unsigned_number ans(std::max(a.size, b.size) + 1, 0);
-    uint32_t rem = 0;
+    uint64_t t = 0;
     for (int i = 0; i < (int)ans.size; i++) {
-        uint64_t t = (uint64_t) (i < (int)a.size ? a.data[i] : 0) + (i < (int)b.size ? b.data[i] : 0) + rem;
+        t = (uint64_t) (i < (int)a.size ? a.data[i] : 0) + (i < (int)b.size ? b.data[i] : 0) + (t >> 32);
         ans.data[i] = (uint32_t) t;
-        if (t >> 32) {
-            rem = 1;
-        } else {
-            rem = 0;
-        }
     }
     ans.shrink_to_fit();
     return ans;
